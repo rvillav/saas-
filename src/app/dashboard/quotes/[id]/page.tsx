@@ -61,7 +61,7 @@ export default function QuoteDetailPage() {
 
   const [quote, setQuote] = useState<QuoteDetail | null>(null);
   const [qItems, setQItems] = useState<QuoteItemDetail[]>([]);
-  const [orgName, setOrgName] = useState("MedStock");
+  const [orgName, setOrgName] = useState("CPAP Osorno");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [sentOk, setSentOk] = useState(false);
@@ -93,7 +93,7 @@ export default function QuoteDetailPage() {
           .select("name")
           .eq("id", profile.organization_id)
           .single();
-        if (org) setOrgName(org.name);
+        if (org) setOrgName("CPAP Osorno");
       }
     }
 
@@ -247,6 +247,7 @@ export default function QuoteDetailPage() {
           <div>
             <p className="text-blue-200 text-xs font-medium tracking-widest uppercase mb-1">Empresa</p>
             <h1 className="text-2xl font-bold text-white uppercase tracking-tight">{orgName}</h1>
+            <p className="text-blue-200 text-sm mt-1 hover:text-white transition-colors"><a href="https://cpaposorno.cl/" target="_blank" rel="noreferrer">https://cpaposorno.cl/</a></p>
           </div>
           <div className="text-right">
             <p className="text-blue-200 text-xs font-medium tracking-widest uppercase mb-1">Cotización</p>
