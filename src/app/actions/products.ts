@@ -44,9 +44,42 @@ export async function createProduct(
     return { ok: false, error: "Sin permiso para crear productos." };
   }
 
+  let finalSku = parsed.data.sku;
+
+  if (!finalSku) {
+    const prefixes: Record<string, string> = {
+      MASCARILLA: "MASC",
+      CPAP: "CPAP",
+      TUBO_CALEFACCIONADO: "TUBO",
+      OTROS: "OTRO",
+    };
+    const prefix = prefixes[parsed.data.category] || "PROD";
+
+    const { data: latestProducts } = await supabase
+      .from("products")
+      .select("sku")
+      .eq("organization_id", profile.organization_id)
+      .ilike("sku", `${prefix}-%`)
+      .order("sku", { ascending: false })
+      .limit(1);
+
+    let nextNum = 1;
+    if (latestProducts && latestProducts.length > 0 && latestProducts[0].sku) {
+      const parts = latestProducts[0].sku.split("-");
+      if (parts.length === 2) {
+        const lastNum = parseInt(parts[1], 10);
+        if (!isNaN(lastNum)) {
+          nextNum = lastNum + 1;
+        }
+      }
+    }
+
+    finalSku = `${prefix}-${String(nextNum).padStart(4, "0")}`;
+  }
+
   const { error } = await supabase.from("products").insert({
     ...parsed.data,
-    sku: parsed.data.sku ?? null,
+    sku: finalSku,
     description: parsed.data.description ?? null,
     organization_id: profile.organization_id,
   });

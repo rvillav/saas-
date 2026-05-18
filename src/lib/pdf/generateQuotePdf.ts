@@ -43,7 +43,13 @@ export function generateQuotePdf(data: QuotePdfData): jsPDF {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(22);
   doc.setTextColor(255, 255, 255);
-  doc.text(data.organizationName.toUpperCase(), MARGIN, 18);
+  doc.text("CPAP OSORNO", MARGIN, 18);
+
+  // Website
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(191, 219, 254);
+  doc.text("https://cpaposorno.cl/", MARGIN, 24);
 
   // "COTIZACIÓN" label on right
   doc.setFontSize(10);
@@ -238,7 +244,7 @@ export function generateQuotePdf(data: QuotePdfData): jsPDF {
   doc.setFontSize(8);
   doc.setTextColor(191, 219, 254);
   doc.text(
-    `${data.organizationName}  |  Cotización N° ${String(data.quoteNumber).padStart(4, "0")}  |  Generado el ${fmt(new Date().toISOString())}`,
+    `CPAP Osorno  |  Cotización N° ${String(data.quoteNumber).padStart(4, "0")}  |  Generado el ${fmt(new Date().toISOString())}`,
     PAGE_W / 2,
     FOOTER_Y + 7.5,
     { align: "center" }
