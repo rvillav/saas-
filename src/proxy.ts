@@ -1,5 +1,23 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+
+// Lazily-initialized rate limiters — only created when env vars are present.
+let authLimiter: Ratelimit | null = null;
+let generalLimiter: Ratelimit | null = null;
+
+function getLimiters(): { auth: Ratelimit; general: Ratelimit } | null {
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return null;
+  }
+  if (!authLimiter || !generalLimiter) {
+    const redis = Redis.fromEnv();
+    authLimiter = new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10, "1 m"), prefix: "rl:auth" });
+    generalLimiter = new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(200, "1 m"), prefix: "rl:gen" });
+  }
+  return { auth: authLimiter, general: generalLimiter };
+}
 
 // ── Route → Minimum role mapping ─────────────────────────────
 // Roles hierarchy: SUPER_ADMIN(4) > ADMIN(3) > USER(2) > VIEWER(1)
@@ -33,6 +51,24 @@ const PROTECTED_ROUTES: ProtectedRoute[] = [
 const PUBLIC_PATHS = ["/login", "/auth"];
 
 export async function proxy(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  // ── Rate limiting ─────────────────────────────────────────────────────────
+  const limiters = getLimiters();
+  if (limiters) {
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "anon";
+    const isAuthPath = pathname.startsWith("/login") || pathname.startsWith("/auth");
+    const limiter = isAuthPath ? limiters.auth : limiters.general;
+    const { success, reset } = await limiter.limit(ip);
+
+    if (!success) {
+      return new NextResponse("Too Many Requests", {
+        status: 429,
+        headers: { "Retry-After": String(Math.ceil((reset - Date.now()) / 1000)) },
+      });
+    }
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -61,8 +97,6 @@ export async function proxy(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  const pathname = request.nextUrl.pathname;
 
   // ── 1. Unauthenticated → redirect to login (except public paths) ──
   if (!user && !PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
