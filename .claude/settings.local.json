@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E '\\\\.\\(json|toml|yml|yaml|mjs\\)$|Dockerfile')",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Rvillarroelv\\\\Desktop\\\\proyectos\\\\saas\" -Force)",
+      "Bash(Select-Object Name)"
+    ]
+  }
+}
