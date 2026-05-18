@@ -157,9 +157,17 @@ npm run lint     # ESLint
 
 ---
 
-## Pendientes / Áreas de mejora conocidas
+## Pendientes / Road to Production
 
-- Envío de emails (cotizaciones) depende de Supabase Functions — endpoint referenciado pero no mostrado en el código fuente del repo.
-- No hay tests automatizados.
-- Editar stock directamente en Productos **no** crea movimiento de inventario — solo el módulo Movimientos genera auditoría.
-- Multi-tenancy a nivel de aplicación; verificar que RLS esté correctamente configurado en Supabase para cada tabla.
+### Seguridad y Configuración (Prioridad Alta)
+- [ ] **Limpieza de Datos:** Eliminar organizaciones de prueba y cuentas sin perfil (`test@...`) antes del lanzamiento oficial.
+- [ ] **Hardening de Base de Datos:** Revocar permisos `EXECUTE` a roles no autorizados (`anon`) en funciones RPC transaccionales y en triggers (`handle_new_user`).
+- [ ] **Políticas de Contraseñas:** Habilitar "Leaked Password Protection" en la configuración de Auth de Supabase.
+- [ ] **Despliegue:** Desplegar el proyecto en Vercel/hosting y actualizar las "Redirect URLs" en Supabase para el dominio en producción.
+
+### Funcionalidad y Deuda Técnica (Prioridad Media)
+- [ ] **Auditoría Estricta de Inventario:** Bloquear la edición manual del campo `current_stock` en la vista de Productos, forzando a que cualquier cambio pase obligatoriamente por el módulo de Movimientos para garantizar trazabilidad.
+- [ ] **Envío de Emails:** Integrar y documentar la Edge Function (Supabase Functions) o servicio (Resend) para el envío directo de PDFs de cotizaciones.
+- [ ] **Testing:** Implementar tests automatizados para los flujos críticos de la aplicación (Ventas, Arriendos, Movimientos de Stock).
+
+*Nota: La seguridad Multi-tenant (RLS) ya ha sido verificada y se encuentra activa en el 100% de las tablas.*
