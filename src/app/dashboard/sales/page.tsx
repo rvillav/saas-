@@ -489,7 +489,13 @@ export default function SalesPage() {
                           onValueChange={(val) => updateItem(idx, "product_id", val as string)}
                         >
                           <SelectTrigger className="flex-1 min-w-[200px]">
-                            <SelectValue placeholder="Seleccionar producto..." />
+                            <SelectValue placeholder="Seleccionar producto...">
+                              {(val: string | null) => {
+                                if (!val) return "Seleccionar producto...";
+                                const p = products.find((pr) => pr.id === val);
+                                return p ? `${p.name}${p.sku ? ` [${p.sku}]` : ""}` : val;
+                              }}
+                            </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
                             {products.map((p) => (

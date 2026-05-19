@@ -178,15 +178,14 @@ export default function QuotesPage() {
   }
 
   function addItem() {
-    if (products.length === 0) return;
     setItems([
       ...items,
       {
-        product_id: products[0].id,
-        name: products[0].name,
+        product_id: "",
+        name: "",
         description: "",
         quantity: 1,
-        unit_price: products[0].unit_price,
+        unit_price: 0,
       },
     ]);
   }
@@ -225,6 +224,10 @@ export default function QuotesPage() {
     e.preventDefault();
     if (items.length === 0) {
       setError("Agrega al menos un producto a la cotización.");
+      return;
+    }
+    if (items.some(i => !i.product_id)) {
+      setError("Por favor, selecciona un producto en todas las líneas.");
       return;
     }
 
@@ -615,7 +618,13 @@ export default function QuotesPage() {
                           onValueChange={(val) => updateItem(idx, "product_id", val as string)}
                         >
                           <SelectTrigger className="flex-1 min-w-[200px]">
-                            <SelectValue />
+                            <SelectValue placeholder="Seleccionar producto...">
+                              {(val: string | null) => {
+                                if (!val) return "Seleccionar producto...";
+                                const p = products.find((pr) => pr.id === val);
+                                return p ? p.name : val;
+                              }}
+                            </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
                             {products.map((p) => (

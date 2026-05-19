@@ -459,7 +459,13 @@ export default function RentalsPage() {
                 <Label>Equipo *</Label>
                 <Select name="product_id" required>
                   <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar equipo..." />
+                    <SelectValue placeholder="Seleccionar equipo...">
+                      {(val: string | null) => {
+                        if (!val) return "Seleccionar equipo...";
+                        const p = products.find((pr) => pr.id === val);
+                        return p ? p.name : val;
+                      }}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {products.map((p) => (
