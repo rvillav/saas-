@@ -47,6 +47,10 @@ type Sale = {
   status: string;
   notes: string | null;
   created_at: string;
+  sale_items?: {
+    quantity: number;
+    products: { name: string } | null;
+  }[];
 };
 
 type Product = {
@@ -102,7 +106,7 @@ export default function SalesPage() {
     setLoading(true);
     const { data, error } = await supabase
       .from("sales")
-      .select("*")
+      .select("*, sale_items (quantity, products (name))")
       .order("created_at", { ascending: false });
     if (error) setError(friendlyError(error.message));
     else setSales(data ?? []);
@@ -144,11 +148,9 @@ export default function SalesPage() {
 
   // ── Item management ───────────────────────────────────────────────────────
   function addItem() {
-    if (products.length === 0) return;
-    const p = products[0];
     setItems((prev) => [
       ...prev,
-      { product_id: p.id, name: p.name, sku: p.sku, quantity: 1, unit_price: p.unit_price, stock: p.current_stock },
+      { product_id: "", name: "", sku: null, quantity: 1, unit_price: 0, stock: 0 },
     ]);
   }
 
@@ -216,6 +218,7 @@ export default function SalesPage() {
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (items.length === 0) { setError("Agrega al menos un producto."); return; }
+    if (items.some(i => !i.product_id)) { setError("Por favor, selecciona un producto en todas las líneas."); return; }
     if (!validateStock()) { setError("Hay productos sin stock suficiente."); return; }
 
     setSaving(true);
@@ -305,6 +308,7 @@ export default function SalesPage() {
               <TableRow>
                 <TableHead>N°</TableHead>
                 <TableHead>Cliente</TableHead>
+                <TableHead>Productos</TableHead>
                 <TableHead>Pago</TableHead>
                 <TableHead>Total</TableHead>
                 <TableHead>Estado</TableHead>
@@ -315,13 +319,13 @@ export default function SalesPage() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-32 text-center">
+                  <TableCell colSpan={8} className="h-32 text-center">
                     <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin mx-auto" />
                   </TableCell>
                 </TableRow>
               ) : filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-32 text-center">
+                  <TableCell colSpan={8} className="h-32 text-center">
                     <ShoppingCart className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-50" />
                     <p className="text-muted-foreground text-sm">No hay ventas registradas.</p>
                   </TableCell>
@@ -340,6 +344,19 @@ export default function SalesPage() {
                       <TableCell>
                         <p className="font-medium">{sale.client_name}</p>
                         {sale.client_rut && <p className="text-xs text-muted-foreground">{sale.client_rut}</p>}
+                      </TableCell>
+                      <TableCell>
+                        {sale.sale_items?.length ? (
+                          <div className="flex flex-col gap-1">
+                            {sale.sale_items.map((item, i) => (
+                              <span key={i} className="text-sm truncate max-w-[200px]" title={item.products?.name ?? ""}>
+                                <span className="font-medium">{item.quantity}x</span> {item.products?.name ?? "Producto eliminado"}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Sin productos</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -472,7 +489,7 @@ export default function SalesPage() {
                           onValueChange={(val) => updateItem(idx, "product_id", val as string)}
                         >
                           <SelectTrigger className="flex-1 min-w-[200px]">
-                            <SelectValue />
+                            <SelectValue placeholder="Seleccionar producto..." />
                           </SelectTrigger>
                           <SelectContent>
                             {products.map((p) => (
@@ -521,10 +538,12 @@ export default function SalesPage() {
                             <AlertCircle className="w-3.5 h-3.5" />
                             {stockErrors[idx]}
                           </p>
-                        ) : (
+                        ) : item.product_id ? (
                           <p className="text-xs text-muted-foreground">
                             Disponible: <span className={item.stock - item.quantity < 5 ? "text-amber-500" : "text-emerald-500"}>{item.stock - item.quantity}</span> unidades tras la venta
                           </p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">Seleccione un producto para ver el stock</p>
                         )}
                       </div>
                     </div>
