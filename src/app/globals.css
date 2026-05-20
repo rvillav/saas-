@@ -114,37 +114,37 @@ body {
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
+  --background: oklch(0.06 0.02 260);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
+  --card: oklch(0.09 0.02 260 / 45%);
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
+  --popover: oklch(0.09 0.02 260 / 90%);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
+  --primary: oklch(0.6 0.22 265);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.12 0.02 260 / 50%);
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
+  --muted: oklch(0.11 0.02 260 / 40%);
+  --muted-foreground: oklch(0.7 0.02 250);
+  --accent: oklch(0.14 0.03 260 / 65%);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --border: oklch(1 0 0 / 6%);
+  --input: oklch(1 0 0 / 8%);
+  --ring: oklch(0.6 0.22 265);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar: oklch(0.07 0.02 260 / 45%);
+  --sidebar-foreground: oklch(0.9 0.01 250);
+  --sidebar-primary: oklch(0.6 0.22 265);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent: oklch(1 0 0 / 6%);
   --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-border: oklch(1 0 0 / 5%);
+  --sidebar-ring: oklch(0.6 0.22 265);
 }
 
 @layer base {
@@ -157,4 +157,83 @@ body {
   html {
     @apply font-sans;
   }
+}
+
+/* Custom background pattern: high tech dot grid */
+.bg-cosmic-grid {
+  background-image: 
+    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.04) 1px, transparent 0),
+    radial-gradient(circle at 12px 12px, rgba(99, 102, 241, 0.02) 1.5px, transparent 0);
+  background-size: 24px 24px;
+}
+
+/* Floating Aurora Anim Keyframes */
+@keyframes float-aurora-1 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  50% {
+    transform: translate(60px, -80px) scale(1.15);
+  }
+}
+
+@keyframes float-aurora-2 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  50% {
+    transform: translate(-70px, 50px) scale(1.08);
+  }
+}
+
+@keyframes float-aurora-3 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1.1);
+  }
+  50% {
+    transform: translate(-40px, -40px) scale(0.92);
+  }
+}
+
+@keyframes star-sparkle {
+  0%, 100% {
+    opacity: 0.15;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.25);
+  }
+}
+
+.animate-float-aurora-1 {
+  animation: float-aurora-1 25s ease-in-out infinite;
+}
+
+.animate-float-aurora-2 {
+  animation: float-aurora-2 30s ease-in-out infinite;
+}
+
+.animate-float-aurora-3 {
+  animation: float-aurora-3 28s ease-in-out infinite;
+}
+
+.animate-star-sparkle {
+  animation: star-sparkle 4s ease-in-out infinite;
+}
+
+/* Enhancing UI Card elements with smooth subtle gradient reflections */
+.card-shine {
+  position: relative;
+  overflow: hidden;
+}
+.card-shine::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08) 50%, transparent);
+  pointer-events: none;
 }

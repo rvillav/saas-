@@ -30,6 +30,7 @@ import {
 } from "@/components/RoleProvider";
 import type { AppRole } from "@/lib/roles";
 import { hasMinRole } from "@/lib/roles";
+import { CosmicBackground } from "@/components/CosmicBackground";
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 
@@ -229,7 +230,9 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   });
 
   return (
-    <div className="min-h-screen bg-slate-950 flex">
+    <div className="min-h-screen flex relative overflow-hidden bg-[#05060f]">
+      <CosmicBackground />
+
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
@@ -241,7 +244,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed lg:sticky top-0 left-0 z-50 h-screen w-64 bg-slate-900/80 backdrop-blur-xl border-r border-white/5 flex flex-col transition-transform duration-300",
+          "fixed lg:sticky top-0 left-0 z-50 h-screen w-64 bg-sidebar backdrop-blur-xl border-r border-border flex flex-col transition-transform duration-300 shadow-xl shadow-black/20",
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
@@ -313,9 +316,9 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col min-h-screen">
+      <main className="flex-1 flex flex-col min-h-screen relative z-10">
         {/* Top bar */}
-        <header className="sticky top-0 z-30 flex items-center gap-4 px-6 py-4 bg-slate-950/80 backdrop-blur-xl border-b border-white/5">
+        <header className="sticky top-0 z-30 flex items-center gap-4 px-6 py-4 bg-background/30 backdrop-blur-md border-b border-border">
           <button
             onClick={() => setSidebarOpen(true)}
             className="lg:hidden text-slate-400 hover:text-white transition-colors"

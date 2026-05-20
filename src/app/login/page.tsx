@@ -9,6 +9,7 @@ import {
   ArrowRight,
   Activity,
 } from "lucide-react";
+import { CosmicBackground } from "@/components/CosmicBackground";
 
 export default function LoginPage() {
   const [state, formAction, pending] = useActionState(
@@ -20,14 +21,10 @@ export default function LoginPage() {
   );
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 p-4">
-      {/* Ambient glow */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl" />
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-[#05060f] p-4 relative overflow-hidden">
+      <CosmicBackground />
 
-      <div className="relative w-full max-w-md">
+      <div className="relative w-full max-w-md z-10">
         {/* Logo */}
         <div className="flex items-center justify-center gap-3 mb-8">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25">
@@ -39,7 +36,7 @@ export default function LoginPage() {
         </div>
 
         {/* Card */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
+        <div className="bg-card backdrop-blur-xl border border-border rounded-2xl p-8 shadow-2xl card-shine">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-white mb-2">
               Bienvenido de vuelta
