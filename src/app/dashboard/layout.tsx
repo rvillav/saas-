@@ -21,6 +21,7 @@ import {
   Wallet,
   Receipt,
   BarChart3,
+  Clock,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
@@ -67,6 +68,7 @@ const navEntries: NavEntry[] = [
     icon: Package,
     children: [
       { kind: "leaf", label: "Bodega", href: "/dashboard/products", icon: Package },
+      { kind: "leaf", label: "Préstamos", href: "/dashboard/loans", icon: Clock },
       { kind: "leaf", label: "Solicitudes", href: "/dashboard/requests", icon: Inbox },
       { kind: "leaf", label: "Movimientos", href: "/dashboard/movements", icon: ArrowDownUp },
     ],
@@ -79,6 +81,7 @@ const navEntries: NavEntry[] = [
       { kind: "leaf", label: "Ventas", href: "/dashboard/sales", icon: ShoppingCart },
       { kind: "leaf", label: "Cotizaciones", href: "/dashboard/quotes", icon: FileText },
       { kind: "leaf", label: "Arriendos", href: "/dashboard/rentals", icon: KeyRound },
+      { kind: "leaf", label: "Gastos y Pagos", href: "/dashboard/expenses", icon: Receipt },
     ],
   },
   {
