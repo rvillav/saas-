@@ -25,6 +25,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // ── Category config ──────────────────────────────────────────────────────────
 const CATEGORIES = [
@@ -450,13 +451,18 @@ export default function ProductsPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="brand">Marca *</Label>
-                <Input
-                  id="brand"
-                  value={form.brand}
-                  onChange={(e) => setForm({ ...form, brand: e.target.value })}
-                  required
-                  placeholder="ResMed, Philips..."
-                />
+                <Select value={form.brand} onValueChange={(val) => setForm({ ...form, brand: val || "" })}>
+                  <SelectTrigger id="brand">
+                    <SelectValue placeholder="Seleccionar marca...">
+                      {(val) => val || "Seleccionar marca..."}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ResMed">ResMed</SelectItem>
+                    <SelectItem value="Philips">Philips</SelectItem>
+                    <SelectItem value="Yuwell">Yuwell</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
