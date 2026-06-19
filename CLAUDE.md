@@ -15,6 +15,7 @@ Multi-tenant SaaS para gestión de inventario médico, ventas, cotizaciones y ar
 | Rate limiting | Upstash Redis + @upstash/ratelimit |
 | Observability | Sentry (@sentry/nextjs 10.x) |
 | PDF | jsPDF + jspdf-autotable |
+| Gráficos | recharts 3.x |
 | TypeScript | v5, strict mode, alias `@/*` → `./src/*` |
 
 ## Arquitectura
@@ -56,7 +57,13 @@ src/app/
 │   ├── movements/page.tsx      Movimientos de inventario
 │   ├── cashbox/page.tsx        Caja
 │   ├── cashbox/transactions/   Transacciones de caja
-│   └── requests/page.tsx       Solicitudes de producto
+│   ├── requests/page.tsx       Solicitudes de producto
+│   ├── loans/page.tsx          Préstamos de insumos
+│   ├── expenses/page.tsx       Gastos y pagos
+│   └── reports/                Reportes (Server Component)
+│       ├── page.tsx            Resumen mensual + anual por categoría
+│       ├── ReportCharts.tsx    Gráficos recharts (Client Component)
+│       └── ReportFilters.tsx   Selectores mes/año (Client Component)
 └── actions/
     ├── auth.ts
     ├── sales.ts
@@ -88,6 +95,7 @@ src/app/
 - **PDF**: generadores en `src/lib/pdf/`. No mezclar lógica de negocio con generación PDF.
 - **Componentes UI**: usar exclusivamente los de `src/components/ui/` (shadcn/ui).
 - **Clases CSS**: usar `cn()` de `src/lib/utils.ts` (tailwind-merge + clsx).
+- **Gráficos**: usar recharts 3.x. `ValueType = number | string | ReadonlyArray<number | string>` — los formatters deben manejar el caso array. Para tooltips custom usar `(props: any)` como tipo del componente (incompatibilidad de tipos internos de recharts 3.x con `readonly`).
 - No agregar comentarios salvo que el "por qué" sea no obvio.
 
 ## Variables de entorno
@@ -109,6 +117,15 @@ Ver `.env.example` para la lista completa. Variables clave:
 ## Seguridad (CSP)
 
 Configurado en `next.config.ts` con `withSentryConfig`. Incluye dominios Supabase e ingest.sentry.io. En dev permite `unsafe-eval`; en prod no.
+
+## Módulo de Reportes (`/dashboard/reports`)
+
+- **Filtros**: año y mes via `searchParams` (URL); el Server Component los lee con `await searchParams`.
+- **Datos mensuales**: join `sales → sale_items → products` filtrando por `status = COMPLETED` y rango de fechas. Agrupación por `products.category`.
+- **Serie de tiempo anual**: misma query con rango año completo; cada punto del array `MonthlyPoint` tiene campos `MASCARILLA | CPAP | TUBO_CALEFACCIONADO | OTROS` (ingresos por categoría calculados desde `item.quantity * item.unit_price`).
+- **Categorías de producto**: `MASCARILLA`, `CPAP`, `TUBO_CALEFACCIONADO`, `OTROS` (enum en DB, mismo valor en código).
+- **Gráficos**: pie chart distribución, bar chart por categoría, horizontal bars top-5 por categoría, area chart serie anual.
+- La columna `total` en la tabla anual usa `sales.total_amount` (valor oficial con IVA); el desglose por categoría usa `item.quantity * item.unit_price` (pueden diferir levemente por redondeo).
 
 ## Módulos pendientes / en desarrollo
 
