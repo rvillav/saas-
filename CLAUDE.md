@@ -60,6 +60,7 @@ src/app/
 │   ├── requests/page.tsx       Solicitudes de producto
 │   ├── loans/page.tsx          Préstamos de insumos
 │   ├── expenses/page.tsx       Gastos y pagos
+│   ├── purchases/page.tsx      Facturas de compra (Client Component)
 │   └── reports/                Reportes (Server Component)
 │       ├── page.tsx            Resumen mensual + anual por categoría
 │       ├── ReportCharts.tsx    Gráficos recharts (Client Component)
@@ -70,7 +71,9 @@ src/app/
     ├── quotes.ts
     ├── rentals.ts
     ├── products.ts
-    └── movements.ts
+    ├── movements.ts
+    ├── loans.ts
+    └── purchases.ts
 ```
 
 ## Clientes Supabase
@@ -86,6 +89,8 @@ src/app/
 - Políticas UPDATE con `WITH CHECK` para prevenir org_id hijacking.
 - RPCs `SECURITY DEFINER` con validación de org ownership:
   - `create_sale()`, `delete_sale()`, `create_rental()`, `return_rental()`
+  - `create_loan()`, `return_loan()`
+  - `create_purchase_invoice()`, `cancel_purchase_invoice()`
 - Migraciones en `supabase/migrations/`. Nunca modificar SQL directamente en prod sin migración.
 
 ## Convenciones de código
@@ -117,6 +122,18 @@ Ver `.env.example` para la lista completa. Variables clave:
 ## Seguridad (CSP)
 
 Configurado en `next.config.ts` con `withSentryConfig`. Incluye dominios Supabase e ingest.sentry.io. En dev permite `unsafe-eval`; en prod no.
+
+## Módulo de Facturas de Compra (`/dashboard/purchases`)
+
+- **Flujo**: crear factura con proveedor + ítems (precio compra IVA inc.) → stock sube automáticamente → en bodega se fija el precio de venta (`products.unit_price`).
+- **Tablas**: `purchase_invoices` (cabecera) + `purchase_invoice_items` (líneas). Ambas con RLS por `organization_id`.
+- **Campo `products.purchase_price`**: actualizado por el RPC con el último precio de compra unitario; sirve de referencia al fijar el precio de venta en bodega.
+- **`create_purchase_invoice()` RPC**: atómico — crea factura, por cada ítem incrementa `current_stock`, actualiza `purchase_price` e inserta movimiento `IN`.
+- **`cancel_purchase_invoice()` RPC**: valida stock suficiente antes de revertir, luego decrementa stock e inserta movimientos `OUT`, marca factura como `CANCELLED`.
+- **Cálculo IVA**: precios de compra son IVA incluido → neto = `round(total / 1.19, 0)`, IVA = `total - neto`.
+- **Roles**: creación USER+, anulación solo ADMIN+.
+- **UI**: tabla expandible (click fila → sub-tabla de ítems con desglose IVA), dialog de creación con editor de líneas dinámico, stats mensuales (facturas, monto invertido, unidades).
+- **Select `onValueChange`**: en este proyecto retorna `string | null` — usar `v ?? ""` al asignar.
 
 ## Módulo de Reportes (`/dashboard/reports`)
 
