@@ -22,6 +22,7 @@ import {
   Receipt,
   BarChart3,
   Clock,
+  TrendingUp,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
@@ -92,6 +93,12 @@ const navEntries: NavEntry[] = [
       { kind: "leaf", label: "Resumen de Caja", href: "/dashboard/cashbox", icon: BarChart3 },
       { kind: "leaf", label: "Movimientos de Caja", href: "/dashboard/cashbox/transactions", icon: Receipt },
     ],
+  },
+  {
+    kind: "leaf",
+    label: "Reportes",
+    href: "/dashboard/reports",
+    icon: TrendingUp,
   },
   {
     kind: "leaf",
