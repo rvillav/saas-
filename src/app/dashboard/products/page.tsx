@@ -24,7 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // ── Category config ──────────────────────────────────────────────────────────
@@ -131,6 +131,12 @@ export default function ProductsPage() {
     return acc;
   }, {});
 
+  // ── Inventory summary stats ───────────────────────────────────────────────
+  const totalUnits = products.reduce((s, p) => s + p.current_stock, 0);
+  const totalValue = products.reduce((s, p) => s + p.unit_price * p.current_stock, 0);
+  const CLP = (n: number) =>
+    n.toLocaleString("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
+
   // ── Modal helpers ─────────────────────────────────────────────────────────
   function openCreate() {
     setModalMode("create");
@@ -221,6 +227,23 @@ export default function ProductsPage() {
           <Plus className="w-4 h-4" />
           Añadir a Bodega
         </Button>
+      </div>
+
+      {/* Inventory summary */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card className="p-4 bg-muted/20">
+          <p className="text-xs text-muted-foreground font-medium">Productos distintos</p>
+          <p className="text-2xl font-bold mt-1">{products.length}</p>
+        </Card>
+        <Card className="p-4 bg-blue-500/5 border-blue-500/20">
+          <p className="text-xs text-blue-400 font-medium">Unidades en stock</p>
+          <p className="text-2xl font-bold text-blue-400 mt-1">{totalUnits.toLocaleString("es-CL")}</p>
+        </Card>
+        <Card className="p-4 bg-emerald-500/5 border-emerald-500/20">
+          <p className="text-xs text-emerald-400 font-medium">Valor total inventario</p>
+          <p className="text-2xl font-bold text-emerald-400 mt-1">{CLP(totalValue)}</p>
+          <p className="text-xs text-emerald-400/60 mt-0.5">precio venta × stock</p>
+        </Card>
       </div>
 
       {/* Category cards */}

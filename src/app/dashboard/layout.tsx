@@ -69,8 +69,8 @@ const navEntries: NavEntry[] = [
     label: "Inventario",
     icon: Package,
     children: [
-      { kind: "leaf", label: "Bodega", href: "/dashboard/products", icon: Package },
       { kind: "leaf", label: "Compras", href: "/dashboard/purchases", icon: PackagePlus },
+      { kind: "leaf", label: "Bodega", href: "/dashboard/products", icon: Package },
       { kind: "leaf", label: "Préstamos", href: "/dashboard/loans", icon: Clock },
       { kind: "leaf", label: "Solicitudes", href: "/dashboard/requests", icon: Inbox },
       { kind: "leaf", label: "Movimientos", href: "/dashboard/movements", icon: ArrowDownUp },
