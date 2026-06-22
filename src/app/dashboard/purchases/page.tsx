@@ -52,16 +52,6 @@ import { Badge } from "@/components/ui/badge";
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 
-type Product = {
-  id: string;
-  name: string;
-  sku: string | null;
-  category: string;
-  unit_price: number;
-  purchase_price: number | null;
-  current_stock: number;
-};
-
 type InvoiceItem = {
   id: string;
   product_id: string;
@@ -87,7 +77,9 @@ type PurchaseInvoice = {
 
 type LineItem = {
   _id: string;
-  product_id: string;
+  product_name: string;
+  brand: string;
+  category: string;
   quantity: number;
   unit_purchase_price: number;
 };
@@ -101,6 +93,15 @@ const EMPTY_FORM = {
   purchase_date: new Date().toISOString().split("T")[0],
   notes: "",
 };
+
+const BRANDS = ["ResMed", "Philips", "Yuwell"] as const;
+
+const CATEGORIES = [
+  { key: "MASCARILLA", label: "Mascarilla" },
+  { key: "CPAP", label: "CPAP" },
+  { key: "TUBO_CALEFACCIONADO", label: "Tubo Calef." },
+  { key: "OTROS", label: "Otros" },
+] as const;
 
 const CATEGORY_LABELS: Record<string, string> = {
   MASCARILLA: "Mascarilla",
@@ -118,7 +119,9 @@ const fmt = (n: number) =>
 
 const newLineItem = (): LineItem => ({
   _id: crypto.randomUUID(),
-  product_id: "",
+  product_name: "",
+  brand: "ResMed",
+  category: "MASCARILLA",
   quantity: 1,
   unit_purchase_price: 0,
 });
@@ -131,7 +134,6 @@ export default function PurchasesPage() {
   const isAdmin = profile ? hasMinRole(profile.role, "ADMIN") : false;
 
   const [invoices, setInvoices] = useState<PurchaseInvoice[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
   const [actionError, setActionError] = useState("");
@@ -153,30 +155,20 @@ export default function PurchasesPage() {
     setLoading(true);
     setFetchError("");
 
-    const [invRes, prodRes] = await Promise.all([
-      supabase
-        .from("purchase_invoices")
-        .select(
-          `id, invoice_number, supplier_name, supplier_rut, purchase_date,
-           subtotal, tax_amount, total_amount, status, notes, created_at,
-           purchase_invoice_items(
-             id, product_id, quantity, unit_purchase_price,
-             products(name, sku, category)
-           )`
-        )
-        .order("created_at", { ascending: false }),
-
-      supabase
-        .from("products")
-        .select("id, name, sku, category, unit_price, purchase_price, current_stock")
-        .order("name"),
-    ]);
+    const invRes = await supabase
+      .from("purchase_invoices")
+      .select(
+        `id, invoice_number, supplier_name, supplier_rut, purchase_date,
+         subtotal, tax_amount, total_amount, status, notes, created_at,
+         purchase_invoice_items(
+           id, product_id, quantity, unit_purchase_price,
+           products(name, sku, category)
+         )`
+      )
+      .order("created_at", { ascending: false });
 
     if (invRes.error) setFetchError(friendlyError(invRes.error.message));
     else setInvoices((invRes.data ?? []) as unknown as PurchaseInvoice[]);
-
-    if (prodRes.error) setFetchError(friendlyError(prodRes.error.message));
-    else setProducts((prodRes.data ?? []) as unknown as Product[]);
 
     setLoading(false);
   }, [supabase]);
@@ -233,9 +225,9 @@ export default function PurchasesPage() {
     e.preventDefault();
     setActionError("");
 
-    const validItems = lineItems.filter((i) => i.product_id !== "");
+    const validItems = lineItems.filter((i) => i.product_name.trim() !== "");
     if (validItems.length === 0) {
-      setActionError("Debe seleccionar al menos un producto.");
+      setActionError("Debe ingresar el nombre de al menos un producto.");
       return;
     }
     for (const item of validItems) {
@@ -253,7 +245,9 @@ export default function PurchasesPage() {
       purchase_date: form.purchase_date,
       notes: form.notes || null,
       items: validItems.map((i) => ({
-        product_id: i.product_id,
+        product_name: i.product_name.trim(),
+        brand: i.brand,
+        category: i.category as "MASCARILLA" | "CPAP" | "TUBO_CALEFACCIONADO" | "OTROS",
         quantity: i.quantity,
         unit_purchase_price: i.unit_purchase_price,
       })),
@@ -745,11 +739,11 @@ export default function PurchasesPage() {
               </div>
 
               {/* Line items header */}
-              <div className="hidden sm:grid grid-cols-[1fr_80px_140px_32px] gap-2 px-1">
-                <span className="text-xs text-muted-foreground">Producto</span>
-                <span className="text-xs text-muted-foreground text-center">
-                  Cant.
-                </span>
+              <div className="hidden sm:grid grid-cols-[110px_1fr_120px_68px_130px_32px] gap-2 px-1">
+                <span className="text-xs text-muted-foreground">Marca</span>
+                <span className="text-xs text-muted-foreground">Nombre producto</span>
+                <span className="text-xs text-muted-foreground">Categoría</span>
+                <span className="text-xs text-muted-foreground text-center">Cant.</span>
                 <span className="text-xs text-muted-foreground text-right">
                   Precio compra (IVA inc.)
                 </span>
@@ -760,28 +754,51 @@ export default function PurchasesPage() {
                 {lineItems.map((item) => (
                   <div
                     key={item._id}
-                    className="grid grid-cols-1 sm:grid-cols-[1fr_80px_140px_32px] gap-2 items-center p-2 rounded-lg border border-border/50 bg-muted/20"
+                    className="grid grid-cols-1 sm:grid-cols-[110px_1fr_120px_68px_130px_32px] gap-2 items-center p-2 rounded-lg border border-border/50 bg-muted/20"
                   >
-                    {/* Product selector */}
+                    {/* Brand */}
                     <Select
-                      value={item.product_id}
+                      value={item.brand}
                       onValueChange={(v) =>
-                        updateLineItem(item._id, "product_id", v ?? "")
+                        updateLineItem(item._id, "brand", v ?? "ResMed")
                       }
                     >
                       <SelectTrigger className="h-9">
-                        <SelectValue placeholder="Selecciona un producto…" />
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {products.map((p) => (
-                          <SelectItem key={p.id} value={p.id}>
-                            <span className="font-mono text-xs text-muted-foreground mr-2">
-                              {p.sku ?? "—"}
-                            </span>
-                            {p.name}
-                            <span className="ml-2 text-xs text-muted-foreground">
-                              ({CATEGORY_LABELS[p.category] ?? p.category})
-                            </span>
+                        {BRANDS.map((b) => (
+                          <SelectItem key={b} value={b}>
+                            {b}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Product name */}
+                    <Input
+                      placeholder="Nombre del producto…"
+                      className="h-9"
+                      value={item.product_name}
+                      onChange={(e) =>
+                        updateLineItem(item._id, "product_name", e.target.value)
+                      }
+                    />
+
+                    {/* Category */}
+                    <Select
+                      value={item.category}
+                      onValueChange={(v) =>
+                        updateLineItem(item._id, "category", v ?? "MASCARILLA")
+                      }
+                    >
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CATEGORIES.map((c) => (
+                          <SelectItem key={c.key} value={c.key}>
+                            {c.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
