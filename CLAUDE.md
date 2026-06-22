@@ -46,14 +46,14 @@ src/app/
 ├── auth/confirm/route.ts       Callback email confirmation
 ├── api/health/route.ts         Health check
 ├── dashboard/
-│   ├── layout.tsx              Layout protegido
+│   ├── layout.tsx              Layout protegido (sidebar + nav)
 │   ├── page.tsx                Dashboard home
 │   ├── admin/page.tsx          Panel admin (ADMIN+)
 │   ├── sales/page.tsx          Ventas
 │   ├── quotes/page.tsx         Cotizaciones
 │   ├── quotes/[id]/page.tsx    Detalle cotización
 │   ├── rentals/page.tsx        Arriendos
-│   ├── products/page.tsx       Inventario productos
+│   ├── products/page.tsx       Bodega — inventario de productos
 │   ├── movements/page.tsx      Movimientos de inventario
 │   ├── cashbox/page.tsx        Caja
 │   ├── cashbox/transactions/   Transacciones de caja
@@ -75,6 +75,23 @@ src/app/
     ├── loans.ts
     └── purchases.ts
 ```
+
+## Navegación (sidebar)
+
+Definida en `src/app/dashboard/layout.tsx` como `navEntries`. Orden de grupos e ítems es significativo — refleja el flujo de trabajo:
+
+- **Inventario**: Compras → Bodega → Préstamos → Solicitudes → Movimientos
+- **Comercial**: Ventas → Cotizaciones → Arriendos → Gastos y Pagos
+- **Caja**: Resumen de Caja → Movimientos de Caja
+- Reportes y Administración como hojas independientes
+
+Al cambiar el orden en el sidebar, modificar únicamente el array `navEntries` en `layout.tsx`.
+
+## Módulo de Bodega (`/dashboard/products`)
+
+- **Stats cards** (sobre los filtros de categoría): productos distintos, unidades totales en stock, y **valor total del inventario** = `sum(unit_price × current_stock)` en CLP.
+- El valor monetario se calcula en el cliente a partir de los datos ya cargados (sin query adicional).
+- Los filtros de categoría (Mascarilla / CPAP / Tubo Calef. / Otros) están debajo de los stats.
 
 ## Clientes Supabase
 
