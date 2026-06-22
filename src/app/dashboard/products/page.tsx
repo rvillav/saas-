@@ -73,6 +73,7 @@ type Product = {
   name: string;
   description: string | null;
   unit_price: number;
+  purchase_price: number | null;
   current_stock: number;
   category: CategoryKey;
 };
@@ -134,6 +135,10 @@ export default function ProductsPage() {
   // ── Inventory summary stats ───────────────────────────────────────────────
   const totalUnits = products.reduce((s, p) => s + p.current_stock, 0);
   const totalValue = products.reduce((s, p) => s + p.unit_price * p.current_stock, 0);
+  const totalCost = products.reduce(
+    (s, p) => s + (p.purchase_price ?? 0) * p.current_stock,
+    0
+  );
   const CLP = (n: number) =>
     n.toLocaleString("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
 
@@ -230,7 +235,7 @@ export default function ProductsPage() {
       </div>
 
       {/* Inventory summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <Card className="p-4 bg-muted/20">
           <p className="text-xs text-muted-foreground font-medium">Productos distintos</p>
           <p className="text-2xl font-bold mt-1">{products.length}</p>
@@ -239,8 +244,13 @@ export default function ProductsPage() {
           <p className="text-xs text-blue-400 font-medium">Unidades en stock</p>
           <p className="text-2xl font-bold text-blue-400 mt-1">{totalUnits.toLocaleString("es-CL")}</p>
         </Card>
+        <Card className="p-4 bg-amber-500/5 border-amber-500/20">
+          <p className="text-xs text-amber-400 font-medium">Valor de compra</p>
+          <p className="text-2xl font-bold text-amber-400 mt-1">{CLP(totalCost)}</p>
+          <p className="text-xs text-amber-400/60 mt-0.5">precio compra × stock</p>
+        </Card>
         <Card className="p-4 bg-emerald-500/5 border-emerald-500/20">
-          <p className="text-xs text-emerald-400 font-medium">Valor total inventario</p>
+          <p className="text-xs text-emerald-400 font-medium">Valor de venta</p>
           <p className="text-2xl font-bold text-emerald-400 mt-1">{CLP(totalValue)}</p>
           <p className="text-xs text-emerald-400/60 mt-0.5">precio venta × stock</p>
         </Card>
