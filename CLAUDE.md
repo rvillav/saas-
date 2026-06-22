@@ -128,11 +128,14 @@ Configurado en `next.config.ts` con `withSentryConfig`. Incluye dominios Supabas
 - **Flujo**: crear factura con proveedor + ítems (precio compra IVA inc.) → stock sube automáticamente → en bodega se fija el precio de venta (`products.unit_price`).
 - **Tablas**: `purchase_invoices` (cabecera) + `purchase_invoice_items` (líneas). Ambas con RLS por `organization_id`.
 - **Campo `products.purchase_price`**: actualizado por el RPC con el último precio de compra unitario; sirve de referencia al fijar el precio de venta en bodega.
-- **`create_purchase_invoice()` RPC**: atómico — crea factura, por cada ítem incrementa `current_stock`, actualiza `purchase_price` e inserta movimiento `IN`.
+- **`create_purchase_invoice()` RPC**: atómico (`SECURITY DEFINER`) — acepta ítems con `product_name + brand + category` (ingreso manual) o `product_id` (backward-compat). Si el producto no existe en la org, lo crea automáticamente con SKU generado. Luego crea la factura, incrementa `current_stock`, actualiza `purchase_price` e inserta movimiento `IN`.
 - **`cancel_purchase_invoice()` RPC**: valida stock suficiente antes de revertir, luego decrementa stock e inserta movimientos `OUT`, marca factura como `CANCELLED`.
 - **Cálculo IVA**: precios de compra son IVA incluido → neto = `round(total / 1.19, 0)`, IVA = `total - neto`.
 - **Roles**: creación USER+, anulación solo ADMIN+.
-- **UI**: tabla expandible (click fila → sub-tabla de ítems con desglose IVA), dialog de creación con editor de líneas dinámico, stats mensuales (facturas, monto invertido, unidades).
+- **UI**: ingreso de productos **manual** — cada línea tiene Select de marca (ResMed / Philips / Yuwell, default ResMed), Input de nombre libre y Select de categoría (default Mascarilla). No usar dropdown que dependa de productos existentes en DB; el RPC se encarga de resolver o crear el producto.
+- **Marcas predeterminadas**: `["ResMed", "Philips", "Yuwell"]` definidas en la constante `BRANDS` del componente.
+- **Tabla expandible**: click fila → sub-tabla de ítems con desglose IVA, stats mensuales (facturas, monto invertido, unidades).
+- **Importante — lógica en RPC, no en Server Action**: NO intentar crear productos desde el server action (RLS bloquearía la inserción). Toda la resolución producto → `product_id` ocurre dentro del RPC `SECURITY DEFINER`.
 - **Select `onValueChange`**: en este proyecto retorna `string | null` — usar `v ?? ""` al asignar.
 
 ## Módulo de Reportes (`/dashboard/reports`)
