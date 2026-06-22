@@ -7,13 +7,6 @@ import { friendlyError } from "@/lib/errors";
 
 const CategoryEnum = z.enum(["MASCARILLA", "CPAP", "TUBO_CALEFACCIONADO", "OTROS"]);
 
-const SKU_PREFIXES: Record<string, string> = {
-  MASCARILLA: "MASC",
-  CPAP: "CPAP",
-  TUBO_CALEFACCIONADO: "TUBO",
-  OTROS: "OTRO",
-};
-
 const LineItemSchema = z.object({
   product_name: z.string().min(1, "Nombre de producto requerido").max(255),
   brand: z.string().min(1, "Marca requerida").max(100),
@@ -58,86 +51,15 @@ export async function createPurchaseInvoice(
     return { ok: false, error: "Sin permiso para registrar facturas de compra." };
   }
 
-  const orgId = profile.organization_id;
-
-  // Resolve each item to a product_id, creating the product if it doesn't exist
-  const resolvedItems: { product_id: string; quantity: number; unit_purchase_price: number }[] = [];
-
-  for (const item of parsed.data.items) {
-    const { data: existing } = await supabase
-      .from("products")
-      .select("id")
-      .eq("organization_id", orgId)
-      .ilike("name", item.product_name.trim())
-      .eq("brand", item.brand)
-      .limit(1);
-
-    let productId: string;
-
-    if (existing && existing.length > 0) {
-      productId = existing[0].id as string;
-    } else {
-      const prefix = SKU_PREFIXES[item.category] ?? "PROD";
-
-      const { data: latest } = await supabase
-        .from("products")
-        .select("sku")
-        .eq("organization_id", orgId)
-        .ilike("sku", `${prefix}-%`)
-        .order("sku", { ascending: false })
-        .limit(1);
-
-      let nextNum = 1;
-      if (latest && latest.length > 0 && latest[0].sku) {
-        const parts = (latest[0].sku as string).split("-");
-        if (parts.length === 2) {
-          const n = parseInt(parts[1], 10);
-          if (!isNaN(n)) nextNum = n + 1;
-        }
-      }
-
-      const sku = `${prefix}-${String(nextNum).padStart(4, "0")}`;
-
-      const { data: created, error: createErr } = await supabase
-        .from("products")
-        .insert({
-          name: item.product_name.trim(),
-          brand: item.brand,
-          category: item.category,
-          unit_price: 0,
-          current_stock: 0,
-          organization_id: orgId,
-          sku,
-        })
-        .select("id")
-        .single();
-
-      if (createErr || !created) {
-        return {
-          ok: false,
-          error: friendlyError(createErr?.message ?? "Error al crear producto"),
-        };
-      }
-
-      productId = created.id as string;
-    }
-
-    resolvedItems.push({
-      product_id: productId,
-      quantity: item.quantity,
-      unit_purchase_price: item.unit_purchase_price,
-    });
-  }
-
   const { data, error } = await supabase.rpc("create_purchase_invoice", {
-    p_org_id: orgId,
+    p_org_id: profile.organization_id,
     p_invoice_number: parsed.data.invoice_number,
     p_supplier_name: parsed.data.supplier_name,
     p_supplier_rut: parsed.data.supplier_rut ?? null,
     p_purchase_date: parsed.data.purchase_date,
     p_notes: parsed.data.notes ?? null,
     p_user_id: user.id,
-    p_items: resolvedItems,
+    p_items: parsed.data.items,
   });
 
   if (error) return { ok: false, error: friendlyError(error.message) };
