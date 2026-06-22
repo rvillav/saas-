@@ -89,8 +89,9 @@ Al cambiar el orden en el sidebar, modificar únicamente el array `navEntries` e
 
 ## Módulo de Bodega (`/dashboard/products`)
 
-- **Stats cards** (sobre los filtros de categoría): productos distintos, unidades totales en stock, y **valor total del inventario** = `sum(unit_price × current_stock)` en CLP.
-- El valor monetario se calcula en el cliente a partir de los datos ya cargados (sin query adicional).
+- **Stats cards** (sobre los filtros de categoría, grid 4 cols): productos distintos · unidades en stock · **valor de compra** (`purchase_price × current_stock`) · **valor de venta** (`unit_price × current_stock`), todos en CLP.
+- `purchase_price` es nullable; productos sin precio de compra registrado cuentan como $0 en el total de compra.
+- Los valores se calculan en el cliente a partir de los datos ya cargados (sin query adicional).
 - Los filtros de categoría (Mascarilla / CPAP / Tubo Calef. / Otros) están debajo de los stats.
 
 ## Clientes Supabase
