@@ -88,9 +88,10 @@ src/app/
 - RLS forzado en todas las tablas (`FORCE ROW LEVEL SECURITY`).
 - Políticas UPDATE con `WITH CHECK` para prevenir org_id hijacking.
 - RPCs `SECURITY DEFINER` con validación de org ownership:
-  - `create_sale()`, `delete_sale()`, `create_rental()`, `return_rental()`
+  - `create_sale()`, `delete_sale()`, `create_rental()`, `return_rental()`, `delete_rental()`
   - `create_loan()`, `return_loan()`
   - `create_purchase_invoice()`, `cancel_purchase_invoice()`
+- `products` tiene columna `updated_at` (agregada en migración `20260622164329`). Los RPCs de compras y arriendos la actualizan al modificar stock.
 - Migraciones en `supabase/migrations/`. Nunca modificar SQL directamente en prod sin migración.
 
 ## Convenciones de código
@@ -137,6 +138,12 @@ Configurado en `next.config.ts` con `withSentryConfig`. Incluye dominios Supabas
 - **Tabla expandible**: click fila → sub-tabla de ítems con desglose IVA, stats mensuales (facturas, monto invertido, unidades).
 - **Importante — lógica en RPC, no en Server Action**: NO intentar crear productos desde el server action (RLS bloquearía la inserción). Toda la resolución producto → `product_id` ocurre dentro del RPC `SECURITY DEFINER`.
 - **Select `onValueChange`**: en este proyecto retorna `string | null` — usar `v ?? ""` al asignar.
+
+## Módulo de Arriendos (`/dashboard/rentals`)
+
+- **Acciones disponibles**: crear arriendo (USER+), registrar devolución (USER+), eliminar arriendo (solo ADMIN+).
+- **`delete_rental()` RPC**: SECURITY DEFINER — si el arriendo está ACTIVO u OVERDUE restaura el stock del producto e inserta movimiento `IN` antes de borrar el registro. Si ya estaba DEVUELTO o CANCELADO, borra directamente.
+- **UI eliminar**: botón Trash2 visible solo para ADMIN+; abre Dialog de confirmación que advierte sobre la restauración de stock cuando aplica.
 
 ## Módulo de Reportes (`/dashboard/reports`)
 

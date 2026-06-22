@@ -83,6 +83,39 @@ export async function createRental(
   return { ok: true };
 }
 
+export async function deleteRental(rentalId: string): Promise<ActionResult> {
+  const idParsed = z.string().uuid().safeParse(rentalId);
+  if (!idParsed.success) return { ok: false, error: "ID inválido." };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "No autenticado." };
+
+  const { data: profile } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile || !["ADMIN", "SUPER_ADMIN"].includes(profile.role)) {
+    return { ok: false, error: "Solo administradores pueden eliminar arriendos." };
+  }
+
+  const { error: rpcErr } = await supabase.rpc("delete_rental", {
+    p_rental_id: idParsed.data,
+    p_user_id: user.id,
+  });
+
+  if (rpcErr) return { ok: false, error: friendlyError(rpcErr.message) };
+
+  revalidatePath("/dashboard/rentals");
+  revalidatePath("/dashboard/products");
+  revalidatePath("/dashboard/movements");
+  return { ok: true };
+}
+
 export async function returnRental(rentalId: string): Promise<ActionResult> {
   const idParsed = z.string().uuid().safeParse(rentalId);
   if (!idParsed.success) return { ok: false, error: "ID inválido." };

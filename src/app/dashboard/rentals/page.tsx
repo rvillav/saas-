@@ -1,6 +1,6 @@
 "use client";
 
-import { createRental, returnRental } from "@/app/actions/rentals";
+import { createRental, returnRental, deleteRental } from "@/app/actions/rentals";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState, useCallback } from "react";
 import { useUserRole } from "@/components/RoleProvider";
@@ -21,6 +21,7 @@ import {
   XCircle,
   Download,
   Eye,
+  Trash2,
 } from "lucide-react";
 import { downloadRentalPdf, previewRentalPdf } from "@/lib/pdf/generateRentalPdf";
 
@@ -87,13 +88,16 @@ export default function RentalsPage() {
   const [supabase] = useState(() => createClient());
   const { profile } = useUserRole();
   const canWrite = profile ? hasMinRole(profile.role, "USER") : false;
+  const isAdmin = profile ? hasMinRole(profile.role, "ADMIN") : false;
   const [rentals, setRentals] = useState<Rental[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [showReturnModal, setShowReturnModal] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Rental | null>(null);
   const [filter, setFilter] = useState<string>("ALL");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [orgName, setOrgName] = useState("MedStock");
 
@@ -179,6 +183,24 @@ export default function RentalsPage() {
       fetchProducts();
     }
     setSaving(false);
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setError(null);
+
+    const res = await deleteRental(deleteTarget.id);
+    setDeleting(false);
+
+    if (!res.ok) {
+      setError(res.error);
+      setDeleteTarget(null);
+      return;
+    }
+    setDeleteTarget(null);
+    fetchRentals();
+    fetchProducts();
   }
 
   async function handleReturn(rentalId: string) {
@@ -400,6 +422,17 @@ export default function RentalsPage() {
                               Devolver
                             </Button>
                           )}
+                          {isAdmin && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => { setError(null); setDeleteTarget(rental); }}
+                              title="Eliminar arriendo"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -528,6 +561,53 @@ export default function RentalsPage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="w-5 h-5" />
+              Eliminar arriendo
+            </DialogTitle>
+            <DialogDescription>
+              ¿Seguro que deseas eliminar el arriendo de{" "}
+              <span className="font-semibold text-foreground">
+                {deleteTarget?.client_name}
+              </span>
+              ?
+              {deleteTarget && ["ACTIVE", "OVERDUE"].includes(deleteTarget.status) && (
+                <span className="block mt-1 text-amber-500">
+                  Este arriendo está activo — el stock del equipo se restaurará automáticamente.
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          {error && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              {error}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDeleteTarget(null)} disabled={deleting}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleting}
+              className="gap-2"
+            >
+              {deleting ? (
+                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4" />
+              )}
+              {deleting ? "Eliminando…" : "Eliminar"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
